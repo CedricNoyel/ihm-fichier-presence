@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Interface de visualisation des élèves dans la classe
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

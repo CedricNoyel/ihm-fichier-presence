@@ -74,7 +74,7 @@ const Student = (props) => {
   const classes = useStyles();
 
   return (
-    <ListItem>
+    <ListItem style={{ zIndex: 0 }}>
       <ListItemAvatar>
         {props.student.status === "En cours" && (
           <StyledBadgeGreen

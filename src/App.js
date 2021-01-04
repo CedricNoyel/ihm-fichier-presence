@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AppBar from "@material-ui/core/AppBar";
 import Student from "./components/Student/Student";
 import Filters from "./components/Filters/Filters";
@@ -10,6 +10,10 @@ import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { studentList } from "./storage/StudentList";
 import EmailIcon from "@material-ui/icons/Email";
+import socketIOClient from "socket.io-client";
+import { Launcher } from "react-chat-window";
+
+const socket = socketIOClient("192.168.1.28:3001");
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -48,6 +52,38 @@ const useStyles = makeStyles((theme) => ({
 export default function Album() {
   const classes = useStyles();
 
+  // CHAT HANDLER
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chat, setChat] = useState({ messageList: [] });
+  const [messageCount, setMessageCount] = useState(0);
+
+  useEffect(() => {
+    socket.on("chat-message", (msg) => {
+      setMessageCount((prevCount) => prevCount + 1);
+      let newMsg = msg;
+      msg.author = "them";
+      setChat((prevState) => ({
+        messageList: [...prevState.messageList, newMsg],
+      }));
+    });
+  }, []);
+
+  const sendChatMessage = (data) => {
+    let newData = data;
+    console.log("SNEDMEsSAGE");
+    socket.emit("chat-message", newData);
+    setChat((prevState) => ({
+      messageList: [...prevState.messageList, newData],
+    }));
+  };
+
+  const handleChatClick = () => {
+    setMessageCount(0);
+    setChatOpen(!chatOpen);
+  };
+
+  /// END CHAT
+
   const filterList = [
     { filter: "tous", filterName: "Classe entière" },
     { filter: "front", filterName: "Front" },
@@ -80,11 +116,12 @@ export default function Album() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  console.log(chat.messageList);
 
   return (
     <React.Fragment>
       <CssBaseline />
-      <AppBar position="relative">
+      <AppBar position="relative" style={{ zIndex: 998 }}>
         <Toolbar>
           <Typography variant="h6" className={classes.title}>
             Etudiants FIL A3
@@ -143,7 +180,7 @@ export default function Album() {
           </div>
         </Toolbar>
       </AppBar>
-      <main>
+      <main style={{ zIndex: 0 }}>
         <Container className={classes.root} maxWidth="xl">
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -162,7 +199,7 @@ export default function Album() {
 
             <Grid item xs={12} sm={9}>
               <Paper className={classes.paper}>
-                <Grid item xs={12} alignItems="center">
+                <Grid item xs={12}>
                   <h2>
                     Présents :{" "}
                     {groupStudent.filter((e) => e.status !== "Absent").length} /{" "}
@@ -197,6 +234,22 @@ export default function Album() {
             </Grid>
           </Grid>
         </Container>
+        <div style={{ zIndex: 999 }}>
+          <Launcher
+            agentProfile={{
+              teamName: "Chat FIL",
+              imageUrl:
+                "https://a.slack-edge.com/66f9/img/avatars-teams/ava_0001-34.png",
+            }}
+            onMessageWasSent={(e) => sendChatMessage(e)}
+            messageList={chat.messageList}
+            newMessagesCount={messageCount}
+            handleClick={(e) => handleChatClick()}
+            isOpen={chatOpen}
+            mute
+            showEmoji
+          />
+        </div>
       </main>
     </React.Fragment>
   );
